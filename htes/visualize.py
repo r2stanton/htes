@@ -235,7 +235,7 @@ def plot_forces_by_nn(F, Z, R):
     plt.show()
 
 def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3, 
-                              show = True, stat_type = 'component'):
+                              show = True, stat_type = 'component', err_type = 'RMSE'):
     """
     Compare ML predicted forces against Reference forces by element type. Hardcoded
     to CHNO.
@@ -251,10 +251,24 @@ def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3,
 
     # Pull statistics
     if stat_type == 'component':
-        mse_c = np.mean((dft_f[c_ind]-ml_f[c_ind])**2)
-        mse_h = np.mean((dft_f[h_ind]-ml_f[h_ind])**2)
-        mse_n = np.mean((dft_f[n_ind]-ml_f[n_ind])**2)
-        mse_o = np.mean((dft_f[o_ind]-ml_f[o_ind])**2)
+        if err_type == "RMSE":
+            err_c = np.sqrt(np.mean((dft_f[c_ind]-ml_f[c_ind])**2))
+            err_h = np.sqrt(np.mean((dft_f[h_ind]-ml_f[h_ind])**2))
+            err_n = np.sqrt(np.mean((dft_f[n_ind]-ml_f[n_ind])**2))
+            err_o = np.sqrt(np.mean((dft_f[o_ind]-ml_f[o_ind])**2))
+        elif err_type == "MSE":
+            err_c = np.mean((dft_f[c_ind]-ml_f[c_ind])**2)
+            err_h = np.mean((dft_f[h_ind]-ml_f[h_ind])**2)
+            err_n = np.mean((dft_f[n_ind]-ml_f[n_ind])**2)
+            err_o = np.mean((dft_f[o_ind]-ml_f[o_ind])**2)
+        elif err_type == "MAE":
+            err_c = np.mean(np.abs(dft_f[c_ind]-ml_f[c_ind]))
+            err_h = np.mean(np.abs(dft_f[h_ind]-ml_f[h_ind]))
+            err_n = np.mean(np.abs(dft_f[n_ind]-ml_f[n_ind]))
+            err_o = np.mean(np.abs(dft_f[o_ind]-ml_f[o_ind]))
+        else:
+            raise NotImplementedError("RMSE, MSE, and MAE are supported only")
+
 
     elif stat_type == 'magnitude':
 
@@ -280,33 +294,48 @@ def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3,
 
         # Mean of the above is simply the MSE of (F_dft-F_pred) in a 
         # 'non'-component-wise manner. 
-        mse_c = np.mean(c_mag)
-        mse_h = np.mean(h_mag)
-        mse_n = np.mean(n_mag)
-        mse_o = np.mean(o_mag)
+        if stat_type == "RMSE":
+            err_c = np.sqrt(np.mean(c_mag))
+            err_h = np.sqrt(np.mean(h_mag))
+            err_n = np.sqrt(np.mean(n_mag))
+            err_o = np.sqrt(np.mean(o_mag))
+        elif stat_type == "MSE":
+            err_c = np.mean(c_mag)
+            err_h = np.mean(h_mag)
+            err_n = np.mean(n_mag)
+            err_o = np.mean(o_mag)
+        elif stat_type == "MAE":
+            err_c = np.mean(np.sqrt(c_mag))
+            err_h = np.mean(np.sqrt(h_mag))
+            err_n = np.mean(np.sqrt(n_mag))
+            err_o = np.mean(np.sqrt(o_mag))
+        else:
+            raise NotImplementedError("RMSE, MSE, and MAE are supported only")
+
+
 
 
 
     lims = [[xmin,xmax],[xmin, xmax]]
 
     plt.subplot(2,2,3)
-    plt.title(f"Carbon Forces | MSE: {mse_c:.2f}")
+    plt.title(f"Carbon Forces | MSE: {err_c:.2f}")
     plt.hist2d(dft_f[c_ind], ml_f[c_ind], bins = bins, range = lims, norm = LogNorm())
     plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
 
     plt.subplot(2,2,4)
-    plt.title(f"Hydrogen Forces | MSE: {mse_h:.2f}")
+    plt.title(f"Hydrogen Forces | MSE: {err_h:.2f}")
     plt.hist2d(dft_f[h_ind], ml_f[h_ind], bins = bins, range = lims, norm = LogNorm())
     plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
 
 
     plt.subplot(2,2,1)
-    plt.title(f"Oxygen Forces | MSE: {mse_h:.2f}")
+    plt.title(f"Oxygen Forces | MSE: {err_h:.2f}")
     plt.hist2d(dft_f[o_ind], ml_f[o_ind], bins = bins, range = lims, norm = LogNorm())
     plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
 
     plt.subplot(2,2,2)
-    plt.title(f"Nitrogen Forces | MSE: {mse_n:.2f}")
+    plt.title(f"Nitrogen Forces | MSE: {err_n:.2f}")
     plt.hist2d(dft_f[n_ind], ml_f[n_ind], bins = bins, range = lims, norm = LogNorm())
     plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
 
@@ -314,7 +343,7 @@ def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3,
         plt.tight_layout()
         plt.show()
     
-    return(mse_c, mse_h, mse_n, mse_o)
+    return(err_c, err_h, err_n, err_o)
 
 
 
