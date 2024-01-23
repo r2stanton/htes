@@ -74,3 +74,5 @@ def atomization_from_total_energy(E_tot, Z, E_iso, per_atom = False):
             E_at[i] = E_tot[i] - res
 
     return E_at
+
+

@@ -1,4 +1,5 @@
 from ase.data import chemical_symbols
+from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from ase import Atoms
 import numpy as np
@@ -10,6 +11,7 @@ def plot_atomwise_by_element(Q, Z, element_types, show = True, semilogy = False,
     chargest, etc.) as a histogram, by the element type. There will be one
     histogram per element.
     """
+
     if colors is not None:
         if type(colors) != str:
             if len(colors) != len(element_types):
@@ -231,4 +233,114 @@ def plot_forces_by_nn(F, Z, R):
     # plt.xlabel("Force Magnitude (eV/Angstrom)")
 
     plt.show()
+
+def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3, 
+                              show = True, stat_type = 'component'):
+    """
+    Compare ML predicted forces against Reference forces by element type. Hardcoded
+    to CHNO.
+    """
+
+    plt.subplots(2,2)
+
+    # Get slices
+    c_ind = np.repeat(np.expand_dims(Z == 6, -1), 3, 2)
+    h_ind = np.repeat(np.expand_dims(Z == 1, -1), 3, 2)
+    n_ind = np.repeat(np.expand_dims(Z == 7, -1), 3, 2)
+    o_ind = np.repeat(np.expand_dims(Z == 8, -1), 3, 2)
+
+    # Pull statistics
+    if stat_type == 'component':
+        mse_c = np.mean((dft_f[c_ind]-ml_f[c_ind])**2)
+        mse_h = np.mean((dft_f[h_ind]-ml_f[h_ind])**2)
+        mse_n = np.mean((dft_f[n_ind]-ml_f[n_ind])**2)
+        mse_o = np.mean((dft_f[o_ind]-ml_f[o_ind])**2)
+
+    elif stat_type == 'magnitude':
+
+        # Component-wise difference
+        c_diff = dft_f[c_ind]-ml_f[c_ind]
+        h_diff = dft_f[h_ind]-ml_f[h_ind]
+        n_diff = dft_f[n_ind]-ml_f[n_ind]
+        o_diff = dft_f[o_ind]-ml_f[o_ind]
+
+        # Reshape to deal with a full force in x,y,z on the 1st axis
+        # E.g. these are F_diff (x,y,z)
+        c_diff_r = c_diff.reshape(-1, 3)
+        h_diff_r = h_diff.reshape(-1, 3)
+        n_diff_r = n_diff.reshape(-1, 3)
+        o_diff_r = o_diff.reshape(-1, 3)
+
+        # Compute dot over the 1st axis,
+        # e.g. F_diff_x**2 + F_diff_y**2 + F_diff_z**2
+        c_mag = np.einsum('...i, ...i', c_diff_r, c_diff_r)
+        h_mag = np.einsum('...i, ...i', h_diff_r, h_diff_r)
+        n_mag = np.einsum('...i, ...i', n_diff_r, n_diff_r)
+        o_mag = np.einsum('...i, ...i', o_diff_r, o_diff_r)
+
+        # Mean of the above is simply the MSE of (F_dft-F_pred) in a 
+        # 'non'-component-wise manner. 
+        mse_c = np.mean(c_mag)
+        mse_h = np.mean(h_mag)
+        mse_n = np.mean(n_mag)
+        mse_o = np.mean(o_mag)
+
+
+
+    lims = [[xmin,xmax],[xmin, xmax]]
+
+    plt.subplot(2,2,3)
+    plt.title(f"Carbon Forces | MSE: {mse_c:.2f}")
+    plt.hist2d(dft_f[c_ind], ml_f[c_ind], bins = bins, range = lims, norm = LogNorm())
+    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+
+    plt.subplot(2,2,4)
+    plt.title(f"Hydrogen Forces | MSE: {mse_h:.2f}")
+    plt.hist2d(dft_f[h_ind], ml_f[h_ind], bins = bins, range = lims, norm = LogNorm())
+    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+
+
+    plt.subplot(2,2,1)
+    plt.title(f"Oxygen Forces | MSE: {mse_h:.2f}")
+    plt.hist2d(dft_f[o_ind], ml_f[o_ind], bins = bins, range = lims, norm = LogNorm())
+    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+
+    plt.subplot(2,2,2)
+    plt.title(f"Nitrogen Forces | MSE: {mse_n:.2f}")
+    plt.hist2d(dft_f[n_ind], ml_f[n_ind], bins = bins, range = lims, norm = LogNorm())
+    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+
+    if show:
+        plt.tight_layout()
+        plt.show()
+    
+    return(mse_c, mse_h, mse_n, mse_o)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
