@@ -50,7 +50,8 @@ def r_z_to_traj(r, z, output_name = "r_z.traj"):
     traj = Trajectory(output_name, "w")
 
     for i in range(n_mol):
-        atoms = Atoms(numbers = z[i], positions = r[i])
+        n_at = np.count_nonzero(z[i])
+        atoms = Atoms(numbers = z[i,:n_at], positions = r[i,:n_at])
         traj.write(atoms)
 
 def atomization_from_total_energy(E_tot, Z, E_iso, per_atom = False):

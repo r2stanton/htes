@@ -235,7 +235,8 @@ def plot_forces_by_nn(F, Z, R):
     plt.show()
 
 def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3, 
-                              show = True, stat_type = 'component', err_type = 'RMSE'):
+                              show = True, stat_type = 'component', err_type = 'RMSE',
+                              log_z_axis = True, save = None):
     """
     Compare ML predicted forces against Reference forces by element type. Hardcoded
     to CHNO.
@@ -312,35 +313,61 @@ def compare_forces_by_element(ml_f, dft_f, Z, bins = 100, xmin = -3, xmax = 3,
         else:
             raise NotImplementedError("RMSE, MSE, and MAE are supported only")
 
-
-
-
-
     lims = [[xmin,xmax],[xmin, xmax]]
 
-    plt.subplot(2,2,3)
-    plt.title(f"Carbon Forces | MSE: {err_c:.2f}")
-    plt.hist2d(dft_f[c_ind], ml_f[c_ind], bins = bins, range = lims, norm = LogNorm())
-    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+    if log_z_axis:
+        plt.subplot(2,2,3)
+        plt.title(f"Carbon Forces | {err_type}: {err_c:.2f}")
+        plt.hist2d(dft_f[c_ind], ml_f[c_ind], bins = bins, range = lims, norm = LogNorm())
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.xlabel("DFT Forces [eV/Å]")
+        plt.ylabel("Predicted Forces [eV/Å]")
 
-    plt.subplot(2,2,4)
-    plt.title(f"Hydrogen Forces | MSE: {err_h:.2f}")
-    plt.hist2d(dft_f[h_ind], ml_f[h_ind], bins = bins, range = lims, norm = LogNorm())
-    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.subplot(2,2,4)
+        plt.title(f"Hydrogen Forces | {err_type}: {err_h:.2f}")
+        plt.hist2d(dft_f[h_ind], ml_f[h_ind], bins = bins, range = lims, norm = LogNorm())
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.xlabel("DFT Forces [eV/Å]")
 
+        plt.subplot(2,2,1)
+        plt.title(f"Oxygen Forces | {err_type}: {err_o:.2f}")
+        plt.hist2d(dft_f[o_ind], ml_f[o_ind], bins = bins, range = lims, norm = LogNorm())
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.ylabel("Predicted Forces [eV/Å]")
 
-    plt.subplot(2,2,1)
-    plt.title(f"Oxygen Forces | MSE: {err_h:.2f}")
-    plt.hist2d(dft_f[o_ind], ml_f[o_ind], bins = bins, range = lims, norm = LogNorm())
-    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.subplot(2,2,2)
+        plt.title(f"Nitrogen Forces | {err_type}: {err_n:.2f}")
+        plt.hist2d(dft_f[n_ind], ml_f[n_ind], bins = bins, range = lims, norm = LogNorm())
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+    else:
+        plt.subplot(2,2,3)
+        plt.title(f"Carbon Forces | {err_type}: {err_c:.2f}")
+        plt.hist2d(dft_f[c_ind], ml_f[c_ind], bins = bins, range = lims)
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.xlabel("DFT Forces [eV/Å]")
+        plt.ylabel("Predicted Forces [eV/Å]")
 
-    plt.subplot(2,2,2)
-    plt.title(f"Nitrogen Forces | MSE: {err_n:.2f}")
-    plt.hist2d(dft_f[n_ind], ml_f[n_ind], bins = bins, range = lims, norm = LogNorm())
-    plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.subplot(2,2,4)
+        plt.title(f"Hydrogen Forces | {err_type}: {err_h:.2f}")
+        plt.hist2d(dft_f[h_ind], ml_f[h_ind], bins = bins, range = lims)
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.xlabel("DFT Forces [eV/Å]")
+
+        plt.subplot(2,2,1)
+        plt.title(f"Oxygen Forces | {err_type}: {err_o:.2f}")
+        plt.hist2d(dft_f[o_ind], ml_f[o_ind], bins = bins, range = lims)
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
+        plt.ylabel("Predicted Forces [eV/Å]")
+
+        plt.subplot(2,2,2)
+        plt.title(f"Nitrogen Forces | {err_type}: {err_n:.2f}")
+        plt.hist2d(dft_f[n_ind], ml_f[n_ind], bins = bins, range = lims)
+        plt.plot(lims[0], lims[0], color = 'red', linestyle = '--')
 
     if show:
         plt.tight_layout()
+        if save is not None:
+            plt.savefig(save)
         plt.show()
     
     return(err_c, err_h, err_n, err_o)
