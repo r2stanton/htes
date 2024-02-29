@@ -34,6 +34,8 @@ def vc_opt(atoms, model = None, device = 'cpu', dispersion = True,
     else:
         atoms.write(output_file)
 
+    return atoms
+
 def fc_opt(atoms, model = None, device = 'cpu', dispersion = True,
            output_file = None, traj_file = None, fmax = .02,
            opt_algo = FIRE):
@@ -61,3 +63,5 @@ def fc_opt(atoms, model = None, device = 'cpu', dispersion = True,
         atoms.write("fc_atoms.cif")
     else:
         atoms.write(output_file)
+
+    return atoms
